@@ -1,0 +1,49 @@
+Column,Description
+race,Race
+ethnicity,Ethnicity
+gender,Gender
+vital_status,Vital status
+age,Age
+age_group,Age group
+Length_of_stay_hours,Length of hospital stay in hours
+visit_type,Type of visit
+IsIschaemicStrokeEvent,Ischemic stroke event
+arrival_mode,Mode of arrival
+arrival_from,Arrival from
+discharge_disposition,Discharge disposition
+visit_data_dispo,Visit data dispo
+MRS_discharge_score_cleaned,Modified Rankin Scale score at discharge
+Arrival_NIHSS_score,NIH Stroke Scale score on arrival
+Arrival_NIHSS_score_cleaned,Cleaned NIHSS score on arrival
+hasIVTPA,IV tissue plasminogen activator received
+BMI,Body mass index
+Tobacco_current_use_indicator,Current tobacco use
+Tobacco_prior_use_indicator,Prior tobacco use
+alcohol_use_frequency,Alcohol use frequency
+evt,Endovascular thrombectomy
+CovidAtVisitFlag,COVID-19 at visit
+FamilyHistoryStrokeFlag,Family history of stroke
+prior COVID-19,Prior COVID-19
+hypertension,Hypertension
+diabetes mellitus,Diabetes mellitus
+diabetes mellitus type 2,Type 2 diabetes mellitus
+myocardial infarction,Myocardial infarction
+alzheimer's disease,Alzheimer's disease
+hyperlipidemia,Hyperlipidemia
+atrial fibrillation,Atrial fibrillation
+chronic heart disease,Chronic heart disease
+chronic kidney disease,Chronic kidney disease
+carotid stenosis,Carotid stenosis
+Coronary artery disease,Coronary artery disease
+Heart failure,Heart failure
+Peripheral vascular disease,Peripheral vascular disease
+Dysphagia_outcome,Dysphagia outcome
+InsuranceCategory,Insurance category
+ispregnancyDoc,Pregnancy documentation
+ispregnancyICD,Pregnancy ICD code
+isTransferEvent,Transfer event
+HasAntiDepressionMedWithin1yr,Antidepressant medication within 1 year
+discharge_disposition_regex,Regex of discharge disposition
+evt_status,Status of EVT
+tici_score,Thrombolysis in Cerebral Infarction score
+TARGET,"Target (1 if recurrent stroke, 0 if not)"
