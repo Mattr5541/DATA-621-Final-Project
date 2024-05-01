@@ -1,0 +1,212 @@
+---
+title: "Final Project"
+output: pdf_document
+date: "2024-04-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(summarytools)
+library(corrplot)
+library(gt)
+library(caret)
+```
+
+## Loading the Data
+
+```{r}
+stroke <- read.csv("https://raw.githubusercontent.com/Mattr5541/DATA-621-Final-Project/main/621clean_shout_dat(in).csv")
+```
+
+## Data Cleaning
+
+First, I will code all "Unknown" observations as NA, as their presence may confound our analysis
+
+```{r}
+stroke <- stroke %>% mutate(across(where(is.character), ~na_if(., "Unknown")))
+stroke <- stroke %>% mutate(across(where(is.character), ~na_if(., "Unknown or Not Reported")))
+```
+
+## Recoding NA values with N where applicable
+
+Certain variables were not coded with N where the presence of an outcome was false. This can be seen in variables with only one outcome
+```{r}
+#unique_values <- lapply(stroke, unique)
+#print(unique_values)
+
+stroke <- stroke %>% 
+  mutate(
+    CovidAtVisitFlag = replace_na(CovidAtVisitFlag, 'N'),
+    FamilyHistoryStrokeFlag = replace_na(FamilyHistoryStrokeFlag, 'N'),
+    prior.COVID.19 = replace_na(prior.COVID.19, 'N'),
+    hypertension = replace_na(hypertension, 'N'),
+    diabetes.mellitus = replace_na(diabetes.mellitus, 'N'),
+    diabetes.mellitus.type.2 = replace_na(diabetes.mellitus.type.2, 'N'),
+    myocardial.infarction = replace_na(myocardial.infarction, 'N'),
+    alzheimer.s.disease = replace_na(alzheimer.s.disease, 'N'),
+    hyperlipidemia = replace_na(hyperlipidemia, 'N'),
+    atrial.fibrillation = replace_na(atrial.fibrillation, 'N'),
+    chronic.heart.disease = replace_na(chronic.heart.disease, 'N'),
+    chronic.kidney.disease = replace_na(chronic.kidney.disease, 'N'),
+    carotid.stenosis = replace_na(carotid.stenosis, 'N'),
+    Coronary.artery.disease = replace_na(Coronary.artery.disease, 'N'),
+    Heart.failure = replace_na(Heart.failure, 'N'),
+    Peripheral.vascular.disease = replace_na(Peripheral.vascular.disease, 'N'),
+    Dysphagia_outcome = replace_na(Dysphagia_outcome, 'N'),
+    ispregnancyDoc = replace_na(ispregnancyDoc, 'N'), 
+    ispregnancyICD = replace_na(ispregnancyICD, 'N'),
+    isTransferEvent = replace_na(isTransferEvent, 'N'))
+```
+
+
+### Examining Missingness
+
+My next step wil be to remove columns that present 80% or more missingness, as they will likely not contribute to our analyses, and any attempts to impute values for these columns may generate unreliable data (we may have to consider the same for columns that present 50% or more missing values)
+
+```{r}
+miss_percent <- colSums(is.na(stroke) / 29662 * 100)
+
+miss_percent_80 <- as.data.frame(miss_percent)
+
+miss_percent_80 <- miss_percent_80 %>% filter(miss_percent > 79)
+
+print(miss_percent_80)
+
+```
+
+## Exploratory Data Analysis
+
+```{r}
+stroke <- stroke %>% 
+  select(-alcohol_use_frequency, -evt, -evt_status, -tici_score)
+
+```
+
+## Splitting the Data into Training/Test Sets
+
+Before modifying the dataset any further, I will split the data into train/test partitions for the purposes of model validation (I will use a standard 80/20 split. To start, however, I want to see how evenly the binary outcomes of our target variable occur in our dataset (I'm assuming there will be an uneven split that is more biased toward negative outcomes)
+
+```{r}
+table(stroke$TARGET)
+```
+As expected, there is a bias toward negative outcomes, presenting the issue of imbalance in our data. As a result, we may need to perform an oversampling or undersampling procedure to account for this, or otherwise balance observations while constructing our models.
+
+```{r}
+set.seed(12345)
+
+train_test <- createDataPartition(stroke$TARGET, p = 0.8, list = F)
+
+stroke_train <- stroke[train_test, ]
+stroke_test <- stroke[-train_test, ]
+```
+
+## Exploratory Data Analysis
+
+### Frequencies
+```{r}
+stroke_train_cat <- select_if(stroke_train, is.character)
+
+stroke_freq <- dfSummary(stroke_train_cat, stats = 'freq')
+
+view(stroke_freq)
+```
+### Descriptive Statistics
+```{r}
+stroke_train_quant <- select_if(stroke_train, is.numeric)
+
+stroke_train_quant <- stroke_train_quant %>% select(-IsIschaemicStrokeEvent) #Removing because the only value is 1
+
+stroke_sum <- dfSummary(stroke_train_quant, stats = c("mean", "sd", "med", "IQR", "min", "max", "valid", "n.missing"))
+
+view(stroke_sum)
+```
+### Correlation Matrix
+```{r}
+cor_matrix = cor(stroke_train_quant, use = "complete.obs")
+
+print(cor_matrix)
+
+corrplot(cor_matrix, method = "circle", type = "upper", order = "hclust",
+         tl.col = "black", tl.srt = 45, 
+         addCoef.col = "black")
+```
+As we can see, most of the correlations present are rather weak. The exception would be the correlations among Arrival_NHISS_score and the cleaned version (I will drop the original), and some moderate correlations among MRS_discharge_score_cleaned and the NHISS scores. Aside from that, there seems to be no real concern regarding multicollinearity among these variables.
+
+Interestingly, there seem to be no high correlations among the predictors and target variables, suggesting that our features may be weak predictors, by themselves, of recurrent strokes, which is rather interesting, since these factors should intuitively be related to the presence of recurrent strokes.
+
+```{r}
+stroke_train <- stroke_train %>% select(-Arrival_NIHSS_score)
+stroke_test <- stroke_test %>% select(-Arrival_NIHSS_score)
+```
+
+### Dummy Coding Categorical Variables (Modify and Use after imputing or dropping NA observations)
+
+```{r}
+#Train Dataset
+# dummy_race_train <- model.matrix(~race - 1, data = stroke_train)
+# dummy_eth_train <- model.matrix(~ethnicity- 1, data = stroke_train, na.action = na.pass)
+# dummy_gender_train <- model.matrix(~gender- 1, data = stroke_train)
+# dummy_vit_train <- model.matrix(~vital_status- 1, data = stroke_train)
+# dummy_age_train <- model.matrix(~age_group- 1, data = stroke_train)
+# dummy_visit_train <- model.matrix(~visit_type- 1, data = stroke_train)
+# dummy_tobacco_curr_train <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_train)
+# dummy_tobacco_past_train <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_train)
+# dummy_fam_train <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_train)
+# dummy_hypertension_train <- model.matrix(~hypertension- 1, data = stroke_train)
+# dummy_diabetes_1_train <- model.matrix(~diabetes.mellitus- 1, data = stroke_train)
+# dummy_diabetes_2_train <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_train)
+# dummy_myo_train <- model.matrix(~myocardial.infarction- 1, data = stroke_train)
+# dummy_hyperlipidemia_train <- model.matrix(~hyperlipidemia- 1, data = stroke_train)
+# dummy_atrial_fib_train <- model.matrix(~atrial.fibrillation- 1, data = stroke_train)
+# dummy_heart_disease_train <- model.matrix(~chronic.heart.disease- 1, data = stroke_train)
+# dummy_kidney_train <- model.matrix(~chronic.kidney.disease- 1, data = stroke_train)
+# dummy_coronary_train <- model.matrix(~Coronary.artery.disease- 1, data = stroke_train)
+# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+# dummy_dysphagia_train <- model.matrix(~Dysphagia_outcome- 1, data = stroke_train)
+# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+# dummy_isTransferEvent_train <- model.matrix(~isTransferEvent- 1, data = stroke_train)
+# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+# 
+# #Test Dataset
+# dummy_race_test <- model.matrix(~race - 1, data = stroke_test)
+# dummy_eth_test <- model.matrix(~ethnicity- 1, data = stroke_test, na.action = na.pass)
+# dummy_gender_test <- model.matrix(~gender- 1, data = stroke_test)
+# dummy_vit_test <- model.matrix(~vital_status- 1, data = stroke_test)
+# dummy_age_test <- model.matrix(~age_group- 1, data = stroke_test)
+# dummy_visit_test <- model.matrix(~visit_type- 1, data = stroke_test)
+# dummy_tobacco_curr_test <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_test)
+# dummy_tobacco_past_test <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_test)
+# dummy_fam_test <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_test)
+# dummy_hypertension_test <- model.matrix(~hypertension- 1, data = stroke_test)
+# dummy_diabetes_1_test <- model.matrix(~diabetes.mellitus- 1, data = stroke_test)
+# dummy_diabetes_2_test <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_test)
+# dummy_myo_test <- model.matrix(~myocardial.infarction- 1, data = stroke_test)
+# dummy_hyperlipidemia_test <- model.matrix(~hyperlipidemia- 1, data = stroke_test)
+# dummy_atrial_fib_test <- model.matrix(~atrial.fibrillation- 1, data = stroke_test)
+# dummy_heart_disease_test <- model.matrix(~chronic.heart.disease- 1, data = stroke_test)
+# dummy_kidney_test <- model.matrix(~chronic.kidney.disease- 1, data = stroke_test)
+# dummy_coronary_test <- model.matrix(~Coronary.artery.disease- 1, data = stroke_test)
+# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+# dummy_dysphagia_test <- model.matrix(~Dysphagia_outcome- 1, data = stroke_test)
+# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+# dummy_isTransferEvent_test <- model.matrix(~isTransferEvent- 1, data = stroke_test)
+# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+
+
+
+```
+
+
+
+
+
+
+
