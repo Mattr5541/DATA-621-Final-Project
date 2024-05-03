@@ -147,6 +147,56 @@ stroke_train <- stroke_train %>% select(-Arrival_NIHSS_score)
 stroke_test <- stroke_test %>% select(-Arrival_NIHSS_score)
 ```
 
+### Removing Weak Correlations
+MARJETE - QUESTION: SHOULD THIS NOT BE APPLIED SINCE THERE ARE MANY WEAK CORRELATIONS?
+
+### Creating new variables 
+MARJETE - QUESTION- this is usually when 2 variables are strongly correlated but since none are would I skip this part? or combine MRS_discharge_score_cleaned and the NHISS scores?
+
+### Missing data 
+MARJETE - QUESTION- do you agree that the median and mode imputation is the right way to go?
+
+last question for now: when transforming the data should I use log since there is range of skewness or box cox? for which variables 
+
+```{r}
+missing_percentage <- stroke_train %>%
+  summarise_all(~ mean(is.na(.)) * 100)
+
+print(missing_percentage)
+```
+
+The following variables have missing data. I broke them up based on the type and provided the percent of missing data to inform the best method to impute the missing data.
+
+Continuous Variables: Length_of_stay_hours (<1%), MRS_discharge_score_cleaned (14%),
+Arrival_NIHSS_score_cleaned (25%), BMI(18.7%). These variables are not normally distributed so I will use median imputation.
+
+Categorical or Ordinal Variables: Race, Ethnicity, Gender, Arrival_mode, Arrival_from, Discharge_disposition, Visit_data_dispo, Tobacco_current_use_indicator, Tobacco_prior_use_indicator, InsuranceCategory, Discharge_disposition_regex. To preserve the nature of these variables, I will use mode imputation as it replaces missing values with the most frequent category. 
+
+```{r}
+mode_impute <- function(x) {
+  mode_val <- names(sort(table(x), decreasing = TRUE))[1]
+  x[is.na(x)] <- mode_val
+  return(x)
+}
+
+columns_to_impute <- c("race", "ethnicity", "gender", "arrival_mode", "arrival_from", "discharge_disposition", "visit_data_dispo", "Tobacco_current_use_indicator", "Tobacco_prior_use_indicator", "InsuranceCategory", "discharge_disposition_regex")
+
+stroke_train <- stroke_train %>%
+  mutate_at(.vars = columns_to_impute, .funs = mode_impute)
+
+stroke_train$MRS_discharge_score_cleaned <- median(stroke_train$MRS_discharge_score_cleaned, na.rm = TRUE)
+stroke_train$Arrival_NIHSS_score_cleaned <- median(stroke_train$Arrival_NIHSS_score_cleaned, na.rm = TRUE)
+stroke_train$Length_of_stay_hours <- median(stroke_train$Length_of_stay_hours, na.rm = TRUE)
+stroke_train$BMI <- median(stroke_train$BMI, na.rm = TRUE)
+```
+
+```{r}
+missing_data_report = stroke_train %>%
+  summarise_all(~sum(is.na(.)))
+
+print(missing_data_report)
+```
+
 ### Dummy Coding Categorical Variables (Modify and Use after imputing or dropping NA observations)
 
 ```{r}
