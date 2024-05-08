@@ -147,17 +147,8 @@ stroke_train <- stroke_train %>% select(-Arrival_NIHSS_score)
 stroke_test <- stroke_test %>% select(-Arrival_NIHSS_score)
 ```
 
-### Removing Weak Correlations
-MARJETE - QUESTION: SHOULD THIS NOT BE APPLIED SINCE THERE ARE MANY WEAK CORRELATIONS?
-
-### Creating new variables 
-MARJETE - QUESTION- this is usually when 2 variables are strongly correlated but since none are would I skip this part? or combine MRS_discharge_score_cleaned and the NHISS scores?
-
-### Missing data 
-MARJETE - QUESTION- do you agree that the median and mode imputation is the right way to go?
-
-last question for now: when transforming the data should I use log since there is range of skewness or box cox? for which variables 
-
+#Part 2
+## Missing data
 ```{r}
 missing_percentage <- stroke_train %>%
   summarise_all(~ mean(is.na(.)) * 100)
@@ -167,8 +158,9 @@ print(missing_percentage)
 
 The following variables have missing data. I broke them up based on the type and provided the percent of missing data to inform the best method to impute the missing data.
 
-Continuous Variables: Length_of_stay_hours (<1%), MRS_discharge_score_cleaned (14%),
-Arrival_NIHSS_score_cleaned (25%), BMI(18.7%). These variables are not normally distributed so I will use median imputation.
+Continuous Variables:
+Length_of_stay_hours (<1%), MRS_discharge_score_cleaned (14%),
+Arrival_NIHSS_score_cleaned (25%), BMI(18.7%). These variables are not normally distributed so I will use median imputation
 
 Categorical or Ordinal Variables: Race, Ethnicity, Gender, Arrival_mode, Arrival_from, Discharge_disposition, Visit_data_dispo, Tobacco_current_use_indicator, Tobacco_prior_use_indicator, InsuranceCategory, Discharge_disposition_regex. To preserve the nature of these variables, I will use mode imputation as it replaces missing values with the most frequent category. 
 
@@ -189,70 +181,140 @@ stroke_train$Arrival_NIHSS_score_cleaned <- median(stroke_train$Arrival_NIHSS_sc
 stroke_train$Length_of_stay_hours <- median(stroke_train$Length_of_stay_hours, na.rm = TRUE)
 stroke_train$BMI <- median(stroke_train$BMI, na.rm = TRUE)
 ```
-
+Now there is no missing data in stroke_train dataset
 ```{r}
 missing_data_report = stroke_train %>%
   summarise_all(~sum(is.na(.)))
 
 print(missing_data_report)
 ```
+```{r}
+#imputing testing dataset
+mode_impute <- function(x) {
+  mode_val <- names(sort(table(x), decreasing = TRUE))[1]
+  x[is.na(x)] <- mode_val
+  return(x)
+}
+columns_to_impute <- c("race", "ethnicity", "gender", "arrival_mode", "arrival_from", "discharge_disposition", "visit_data_dispo", "Tobacco_current_use_indicator", "Tobacco_prior_use_indicator", "InsuranceCategory", "discharge_disposition_regex")
 
-### Dummy Coding Categorical Variables (Modify and Use after imputing or dropping NA observations)
+stroke_test <- stroke_test %>%
+  mutate_at(.vars = columns_to_impute, .funs = mode_impute)
+
+stroke_test$MRS_discharge_score_cleaned <- median(stroke_test$MRS_discharge_score_cleaned, na.rm = TRUE)
+stroke_test$Arrival_NIHSS_score_cleaned <- median(stroke_test$Arrival_NIHSS_score_cleaned, na.rm = TRUE)
+stroke_test$Length_of_stay_hours <- median(stroke_test$Length_of_stay_hours, na.rm = TRUE)
+stroke_test$BMI <- median(stroke_test$BMI, na.rm = TRUE)
+```
 
 ```{r}
+missing_data_test = stroke_test%>%
+  summarise_all(~sum(is.na(.)))
+
+print(missing_data_test)
+```
+
+###Dummy Coding Categorical Variables
+Creating dummy coding for categorical variables, in both training and testing datasets, results in a format that helps prepare data for further analysis. The '-1' part of the code was done to avoid multicollinearity issues.
+```{r}
 #Train Dataset
-# dummy_race_train <- model.matrix(~race - 1, data = stroke_train)
-# dummy_eth_train <- model.matrix(~ethnicity- 1, data = stroke_train, na.action = na.pass)
-# dummy_gender_train <- model.matrix(~gender- 1, data = stroke_train)
-# dummy_vit_train <- model.matrix(~vital_status- 1, data = stroke_train)
-# dummy_age_train <- model.matrix(~age_group- 1, data = stroke_train)
-# dummy_visit_train <- model.matrix(~visit_type- 1, data = stroke_train)
-# dummy_tobacco_curr_train <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_train)
-# dummy_tobacco_past_train <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_train)
-# dummy_fam_train <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_train)
-# dummy_hypertension_train <- model.matrix(~hypertension- 1, data = stroke_train)
-# dummy_diabetes_1_train <- model.matrix(~diabetes.mellitus- 1, data = stroke_train)
-# dummy_diabetes_2_train <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_train)
-# dummy_myo_train <- model.matrix(~myocardial.infarction- 1, data = stroke_train)
-# dummy_hyperlipidemia_train <- model.matrix(~hyperlipidemia- 1, data = stroke_train)
-# dummy_atrial_fib_train <- model.matrix(~atrial.fibrillation- 1, data = stroke_train)
-# dummy_heart_disease_train <- model.matrix(~chronic.heart.disease- 1, data = stroke_train)
-# dummy_kidney_train <- model.matrix(~chronic.kidney.disease- 1, data = stroke_train)
-# dummy_coronary_train <- model.matrix(~Coronary.artery.disease- 1, data = stroke_train)
-# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-# dummy_dysphagia_train <- model.matrix(~Dysphagia_outcome- 1, data = stroke_train)
-# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-# dummy_isTransferEvent_train <- model.matrix(~isTransferEvent- 1, data = stroke_train)
-# dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-# 
-# #Test Dataset
-# dummy_race_test <- model.matrix(~race - 1, data = stroke_test)
-# dummy_eth_test <- model.matrix(~ethnicity- 1, data = stroke_test, na.action = na.pass)
-# dummy_gender_test <- model.matrix(~gender- 1, data = stroke_test)
-# dummy_vit_test <- model.matrix(~vital_status- 1, data = stroke_test)
-# dummy_age_test <- model.matrix(~age_group- 1, data = stroke_test)
-# dummy_visit_test <- model.matrix(~visit_type- 1, data = stroke_test)
-# dummy_tobacco_curr_test <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_test)
-# dummy_tobacco_past_test <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_test)
-# dummy_fam_test <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_test)
-# dummy_hypertension_test <- model.matrix(~hypertension- 1, data = stroke_test)
-# dummy_diabetes_1_test <- model.matrix(~diabetes.mellitus- 1, data = stroke_test)
-# dummy_diabetes_2_test <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_test)
-# dummy_myo_test <- model.matrix(~myocardial.infarction- 1, data = stroke_test)
-# dummy_hyperlipidemia_test <- model.matrix(~hyperlipidemia- 1, data = stroke_test)
-# dummy_atrial_fib_test <- model.matrix(~atrial.fibrillation- 1, data = stroke_test)
-# dummy_heart_disease_test <- model.matrix(~chronic.heart.disease- 1, data = stroke_test)
-# dummy_kidney_test <- model.matrix(~chronic.kidney.disease- 1, data = stroke_test)
-# dummy_coronary_test <- model.matrix(~Coronary.artery.disease- 1, data = stroke_test)
-# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
-# dummy_dysphagia_test <- model.matrix(~Dysphagia_outcome- 1, data = stroke_test)
-# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
-# dummy_isTransferEvent_test <- model.matrix(~isTransferEvent- 1, data = stroke_test)
-# dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+dummy_race_train <- model.matrix(~race - 1, data = stroke_train)
+dummy_eth_train <- model.matrix(~ethnicity- 1, data = stroke_train, na.action = na.pass)
+dummy_gender_train <- model.matrix(~gender- 1, data = stroke_train)
+dummy_vit_train <- model.matrix(~vital_status- 1, data = stroke_train)
+dummy_age_train <- model.matrix(~age_group- 1, data = stroke_train)
+dummy_visit_train <- model.matrix(~visit_type- 1, data = stroke_train)
+dummy_tobacco_curr_train <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_train)
+dummy_tobacco_past_train <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_train)
+dummy_fam_train <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_train)
+dummy_hypertension_train <- model.matrix(~hypertension- 1, data = stroke_train)
+dummy_diabetes_1_train <- model.matrix(~diabetes.mellitus- 1, data = stroke_train)
+dummy_diabetes_2_train <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_train)
+dummy_myo_train <- model.matrix(~myocardial.infarction- 1, data = stroke_train)
+dummy_hyperlipidemia_train <- model.matrix(~hyperlipidemia- 1, data = stroke_train)
+dummy_atrial_fib_train <- model.matrix(~atrial.fibrillation- 1, data = stroke_train)
+dummy_heart_disease_train <- model.matrix(~chronic.heart.disease- 1, data = stroke_train)
+dummy_kidney_train <- model.matrix(~chronic.kidney.disease- 1, data = stroke_train)
+dummy_coronary_train <- model.matrix(~Coronary.artery.disease- 1, data = stroke_train)
+dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+dummy_dysphagia_train <- model.matrix(~Dysphagia_outcome- 1, data = stroke_train)
+dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+dummy_isTransferEvent_train <- model.matrix(~isTransferEvent- 1, data = stroke_train)
+dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
+
+#Test Dataset
+dummy_race_test <- model.matrix(~race - 1, data = stroke_test)
+dummy_eth_test <- model.matrix(~ethnicity- 1, data = stroke_test, na.action = na.pass)
+dummy_gender_test <- model.matrix(~gender- 1, data = stroke_test)
+dummy_vit_test <- model.matrix(~vital_status- 1, data = stroke_test)
+dummy_age_test <- model.matrix(~age_group- 1, data = stroke_test)
+ dummy_visit_test <- model.matrix(~visit_type- 1, data = stroke_test)
+dummy_tobacco_curr_test <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_test)
+dummy_tobacco_past_test <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_test)
+dummy_fam_test <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_test)
+dummy_hypertension_test <- model.matrix(~hypertension- 1, data = stroke_test)
+dummy_diabetes_1_test <- model.matrix(~diabetes.mellitus- 1, data = stroke_test)
+dummy_diabetes_2_test <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_test)
+dummy_myo_test <- model.matrix(~myocardial.infarction- 1, data = stroke_test)
+dummy_hyperlipidemia_test <- model.matrix(~hyperlipidemia- 1, data = stroke_test)
+dummy_atrial_fib_test <- model.matrix(~atrial.fibrillation- 1, data = stroke_test)
+dummy_heart_disease_test <- model.matrix(~chronic.heart.disease- 1, data = stroke_test)
+dummy_kidney_test <- model.matrix(~chronic.kidney.disease- 1, data = stroke_test)
+dummy_coronary_test <- model.matrix(~Coronary.artery.disease- 1, data = stroke_test)
+dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+dummy_dysphagia_test <- model.matrix(~Dysphagia_outcome- 1, data = stroke_test)
+dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+dummy_isTransferEvent_test <- model.matrix(~isTransferEvent- 1, data = stroke_test)
+dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
+```
+
+## Transformation (HELP!!) 
+
+Log transformation on the variable BMI should prove to be helpful since the range of 2 to 259 is unrealistic in real world metrics (on both the higher and smaller end). The same transformation on Length_of_stay_hours would also be useful as there likely should not be negative hours nor 9,666 hours (max value) which estimates to over a year.
+
+```{r}
+log_no_neg <- function(x) {
+  max_val <- max(x)
+  min_val <- min(x)
+  shift <- 0
+  if (min_val <= 0) {
+    shift <- abs(min_val) + 1
+  }
+  log(x + shift)
+}
+
+stroke_train_1 <- stroke_train %>%
+  mutate(
+    log_BMI = log_no_neg(BMI),
+    log_Length_of_stay_hours = log_no_neg(Length_of_stay_hours)
+  ) %>%
+  dplyr::select(-BMI, -Length_of_stay_hours)
 
 
+train_stats <- dfSummary(stroke_train_1, stats = c("mean", "sd", "med", "IQR", "min", "max", "valid", "n.missing"))
+
+view(train_stats)
+
+#Both result in one distinct value which seems wrong
+```
+`
+`
+```{r}
+# Apply log transformations safely by adding 1 to avoid log(0)
+stroke_train <- stroke_train %>%
+  mutate(log_BMI = log(BMI + 1),
+         log_Length_of_stay_hours = log(Length_of_stay_hours + 1))
+
+# Check the histograms of the log-transformed variables
+par(mfrow=c(1,2))
+hist(stroke_train$log_BMI, main = "Log-transformed BMI")
+hist(stroke_train$log_Length_of_stay_hours, main = "Log-transformed Length_of_stay_hours")
+
+#tried it again - same issue
 
 ```
+
+
+
 
 
 
