@@ -200,10 +200,10 @@ columns_to_impute <- c("race", "ethnicity", "gender", "arrival_mode", "arrival_f
 stroke_test <- stroke_test %>%
   mutate_at(.vars = columns_to_impute, .funs = mode_impute)
 
-stroke_test$MRS_discharge_score_cleaned <- median(stroke_test$MRS_discharge_score_cleaned, na.rm = TRUE)
-stroke_test$Arrival_NIHSS_score_cleaned <- median(stroke_test$Arrival_NIHSS_score_cleaned, na.rm = TRUE)
-stroke_test$Length_of_stay_hours <- median(stroke_test$Length_of_stay_hours, na.rm = TRUE)
-stroke_test$BMI <- median(stroke_test$BMI, na.rm = TRUE)
+stroke_test$MRS_discharge_score_cleaned <- ifelse(is.na(stroke_test$MRS_discharge_score_cleaned), median(stroke_test$MRS_discharge_score_cleaned, na.rm = TRUE), stroke_test$MRS_discharge_score_cleaned)
+stroke_test$Arrival_NIHSS_score_cleaned <- ifelse(is.na(stroke_test$Arrival_NIHSS_score_cleaned), median(stroke_test$Arrival_NIHSS_score_cleaned, na.rm = TRUE), stroke_test$Arrival_NIHSS_score_cleaned)
+stroke_test$Length_of_stay_hours <- ifelse(is.na(stroke_test$Length_of_stay_hours), median(stroke_test$Length_of_stay_hours, na.rm = TRUE), stroke_test$Length_of_stay_hours)
+stroke_test$BMI <- ifelse(is.na(stroke_test$BMI), median(stroke_test$BMI, na.rm = TRUE), stroke_test$BMI)
 ```
 
 ```{r}
@@ -273,13 +273,16 @@ Log transformation on the variable BMI should prove to be helpful since the rang
 
 ```{r}
 log_no_neg <- function(x) {
-  max_val <- max(x)
-  min_val <- min(x)
+  max_val <- max(x, na.rm = TRUE)
+  min_val <- min(x, na.rm = TRUE)
   shift <- 0
   if (min_val <= 0) {
     shift <- abs(min_val) + 1
   }
-  log(x + shift)
+  x_shifted <- x + shift
+  log_x <- log(x_shifted)
+  log_x[is.na(x)] <- NA  
+  return(log_x)
 }
 
 stroke_train_1 <- stroke_train %>%
