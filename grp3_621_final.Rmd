@@ -380,6 +380,27 @@ lasso_model <- glmnet(X, Y, family = "binomial", alpha = 1, lambda = optimal_lam
 print(final_model)
 ```
 
+##### Ridge Regression:
+
+```{r}
+# Extract predictor variables and the target variable from the stroke_train data
+X <- model.matrix(~ . - 1, data = stroke_train)  # Remove intercept term
+Y <- stroke_train$TARGET
+
+# Perform cross-validation to select optimal lambda value
+cv_model <- cv.glmnet(X, Y, family = "binomial", alpha = 0, type.measure = "deviance")
+
+# Select optimal lambda
+optimal_lambda <- cv_model$lambda.min
+print(paste("Optimal Lambda:", optimal_lambda))
+
+# Fit the ridge logistic regression model with the selected lambda value
+ridge_model <- glmnet(X, Y, family = "binomial", alpha = 0, lambda = optimal_lambda)
+
+# Summary of the ridge logistic regression model
+print(ridge_model)
+```
+
 
 
 
