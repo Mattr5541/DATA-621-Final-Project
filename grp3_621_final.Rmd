@@ -330,6 +330,55 @@ hist(stroke_train$log_Length_of_stay_hours, main = "Log-transformed Length_of_st
 #tried it again - same issue
 ```
 
+### Part 3
+
+#### Filtering out all the categorical variables
+
+```{r}
+stroke_train = stroke_train %>%
+  select(where(~!is.character(.)))
+
+stroke_test = stroke_test %>%
+  select(where(~!is.character(.)))
+```
+
+#### Logistic Regression:
+
+```{r}
+model <- glm(TARGET ~ ., 
+             data = stroke_train, 
+             family = binomial)
+
+summary(model)
+```
+
+The summary yields the result "Coefficients: (28 not defined because of singularities)." In an effort to counter this negative result, I will perform both Ridge and Lasso Regressions.
+
+##### Lasso:
+
+```{r}
+# Extract predictor variables and the target variable from the stroke_train data
+X <- model.matrix(~ . - 1, data = stroke_train)  # Remove intercept term
+Y <- stroke_train$TARGET
+
+# Fit the Lasso logistic regression model
+lasso_model <- glmnet(X, Y, family = "binomial", alpha = 1)  # Set alpha = 1 for Lasso penalty
+
+# Get the lambda values from the Lasso model
+lambda_values <- lasso_model$lambda
+
+# Perform cross-validation
+cv_model <- cv.glmnet(X, Y, alpha = 1, lambda = lambda_values, nfolds = 10)
+
+# Select optimal lambda
+optimal_lambda <- cv_model$lambda.min
+print(paste("Optimal Lambda:", optimal_lambda))
+
+# Refit final model
+lasso_model <- glmnet(X, Y, family = "binomial", alpha = 1, lambda = optimal_lambda)
+
+print(final_model)
+```
 
 
 
