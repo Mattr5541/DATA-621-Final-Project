@@ -9,4 +9,4 @@
 
 
 
-Data Citation: Sanelli, P., Yang, B., O'Hara, J., Jimenez, J., Gribko, M., Martinez, G., Feizullayeva, C., Adinarayan, K., Hoang, A., Qui, M., Wang, J., Boltyenkov, A., Sangha, K., Sanmartin, M., Elhabr, A., & Katz, J. (2023, April 11). Stroke health outcomes. Retrieved April 11, 2023
+Data Citation: Sanelli, P., Yang, B., O'Hara, J., Jimenez, J., Gribko, M., Martinez, G., Feizullayeva, C., Adinarayan, K., Hoang, A., Qui, M., Wang, J., Boltyenkov, A., Sangha, K., Sanmartin, M., Elhabr, A., & Katz, J. (2023, April 11). Stroke health outcomes database. Retrieved April 11, 2023
