@@ -399,8 +399,10 @@ print(paste("Optimal Lambda:", optimal_lambda))
 # Refit final model
 lasso_model <- glmnet(X, Y, family = "binomial", alpha = 1, lambda = optimal_lambda)
 
-print(final_model)
+print(lasso_model)
 ```
+
+Lasso Regression is helpful here as the variable selection is almost "automatic" and given that the dataset has a lot of predictors, this is extremely valuable. Lasso regression also helps with possible over-fitting as well.
 
 ##### Ridge Regression:
 
@@ -422,6 +424,8 @@ ridge_model <- glmnet(X, Y, family = "binomial", alpha = 0, lambda = optimal_lam
 # Summary of the ridge logistic regression model
 print(ridge_model)
 ```
+
+Ridge regression is also a great method for "removing" the affect caused by irrelevant predictors in the dataset and therefore in the model. Though, the difference with Ridge regression is that Ridge regression does not "remove" the more irrelevant predictors, which could help with multicollinearity in a more graceful manner.
 
 #### Decision Trees
 
