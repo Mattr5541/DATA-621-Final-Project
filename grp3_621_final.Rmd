@@ -362,7 +362,7 @@ stroke_train[] <- lapply(stroke_train, function(x) {
 # Impute the missing value using the median of the column
 stroke_train$log_Length_of_stay_hours[is.na(stroke_train$log_Length_of_stay_hours)] <- median(stroke_train$log_Length_of_stay_hours, na.rm = TRUE)
 
-X <- model.matrix(~ . - 1, data = stroke_train)  # Remove intercept term
+X <- model.matrix(~ . - 1 - TARGET, data = stroke_train)  # Remove intercept term
 Y <- stroke_train$TARGET
 
 # Fit the Lasso logistic regression model
@@ -390,7 +390,7 @@ Lasso Regression is helpful here as the variable selection is almost "automatic"
 
 ```{r}
 # Extract predictor variables and the target variable from the stroke_train data
-X <- model.matrix(~ . - 1, data = stroke_train)  # Remove intercept term
+X <- model.matrix(~ . - 1 - TARGET, data = stroke_train)  # Remove intercept term
 Y <- stroke_train$TARGET
 
 # Perform cross-validation to select optimal lambda value
@@ -442,40 +442,57 @@ observed_vals_ridge <- Y
 res_ridge <- observed_vals_ridge - predicted_vals_ridge
 mse_ridge <- mean(res_ridge^2)
 
+# Decision Tree Model
+tree_model <- rpart(TARGET ~ ., data = stroke_train, method = "class")
+predicted_vals_tree <- predict(tree_model, newdata = stroke_train, type = "prob")[,2]  # assuming TARGET = 1 is the second column
+observed_vals_tree <- stroke_train$TARGET
+res_tree <- observed_vals_tree - predicted_vals_tree
+mse_tree <- mean(res_tree^2)
+
 # Print MSE of each model
 cat("Logistic Regression MSE:", mse_lr, "\n")
 cat("Lasso Regression MSE:", mse_lasso, "\n")
 cat("Ridge Regression MSE:", mse_ridge, "\n")
+cat("Decision Tree MSE:", mse_tree, "\n")
+
 
 ```
 
-The Lasso Regression model performs the best among the three models. It has the lowest MSE, indicating that the predicted probabilities from the Lasso model are closest to the actual outcomes on the training set. This suggests that Lasso Regression, which includes a penalty term that encourages the model to reduce the number of coefficients, effectively minimizes overfitting and improves the model's predictive accuracy. Ridge Regression also improves upon the basic Logistic Regression model but does not reach the predictive accuracy of the Lasso model. Logistic Regression, without any regularization, has the highest MSE, suggesting it might be overfitting to the training data.
+The mean squared error (MSE) results from the different models in our analysis present a close comparison, particularly among the logistic, Lasso, and Ridge regression models, with the Decision Tree model performing slightly worse. The Logistic Regression model achieved the lowest MSE at 0.1094177, indicating it was the most accurate in predicting the target variable among the four models. This suggests that the logistic model, despite its simplicity relative to the regularized models, managed to fit the data slightly better without overfitting, as the regularization in Lasso and Ridge did not significantly enhance the model accuracy in this case.
 
-Now, I will plot the residuals:
+The Lasso Regression is almost identical to that of the Logistic Regression, at 0.1094384, showing that the penalty applied to reduce the coefficients of less important predictors did not substantially improve prediction accuracy. Similarly, the Ridge Regression, which also applies a penalty but does not reduce coefficients to zero, showed a marginally higher MSE of 0.1095066. This implies that the penalty in Ridge, which aims to handle multicollinearity and reduce model complexity, was also not significantly beneficial in this context.
+
+The Decision Tree model had the highest MSE at 0.1276622, suggesting it was less effective at predicting the target compared to the regression-based models. This could be due to the model overfitting the training data or not capturing the linear relationships as effectively as the regression models. Decision trees are typically more sensitive to the specific structure of the training data and can lead to higher variance if not properly tuned or if the data does not support the tree's split criteria well.
+
+
+Now, I will plot the residuals to visualize:
 
 ```{r}
+
 residuals_data <- data.frame(
-  Observed = c(observed_vals_lr, observed_vals_lasso, observed_vals_ridge),
-  Residuals = c(res_lr, res_lasso, res_ridge),
+  Observed = c(observed_vals_lr, observed_vals_lasso, observed_vals_ridge, observed_vals_tree),
+  Residuals = c(res_lr, res_lasso, res_ridge, res_tree),
   Model = factor(c(rep("Logistic", length(res_lr)),
                    rep("Lasso", length(res_lasso)),
-                   rep("Ridge", length(res_ridge)))
+                   rep("Ridge", length(res_ridge)),
+                   rep("Tree", length(res_tree))) 
                  )
 )
 
 ggplot(residuals_data, aes(x = Observed, y = Residuals, color = Model)) +
   geom_point(alpha = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(title = "Residuals Plot for Logistic, Lasso, and Ridge Regression Models",
+  labs(title = "Residuals Plot for Logistic, Lasso, Ridge, and Tree Regression Models",
        x = "Observed Values",
        y = "Residuals") +
   theme_minimal() +
-  scale_color_manual(values = c("blue", "green", "purple")) +
+  scale_color_manual(values = c("blue", "green", "purple", "orange")) + 
   theme(legend.title = element_blank())
+
 ```
 
 
-Moving forward, lets use the Lasso Model
+Moving forward, lets use the Lgistic model
 
 Now lets make predictions using the test dataset.
 
@@ -483,19 +500,20 @@ Now lets make predictions using the test dataset.
 names(stroke_test) <- gsub("test", "train", names(stroke_test))
 print(colnames(stroke_test))
 
+# Create model matrix for the test dataset
 X_test <- model.matrix(~ . - 1, data = stroke_test)
 
-# Rechecking column names
+# Recheck column names to ensure they match those used in the training model
 print(colnames(X_test))
 
-# Now, retry the prediction
-predicted_probs <- predict(lasso_model, newx = X_test, s = optimal_lambda, type = "response")
+# Predict using the logistic regression model
+predicted_probs <- predict(model, newdata = stroke_test, type = "response")
 
 # Create a data frame for visualization
 predictions <- data.frame(Probability = predicted_probs)
 
 
-ggplot(predictions, aes(x = predicted_probs)) +
+ggplot(predictions, aes(x = Probability)) +
   geom_histogram(bins = 50, fill = "blue", color = "black") +
   ggtitle("Histogram of Predicted Probabilities") +
   xlab("Predicted Probability of TARGET = 1") +
@@ -504,4 +522,33 @@ ggplot(predictions, aes(x = predicted_probs)) +
 ```
 
 
+
+### Model Interpretation
+
+We therefore select the logistic regression model as the model to interpret for our project.
+
+
+```{r}
+
+
+coefficients <- coef(model)
+
+print(summary(model))
+
+
+```
+
+Our logistic regression model reveals a mixture of significant and non-significant predictors. Notably, the model adjusts for various clinical and demographic factors.
+
+Significant variables like age, hasIVTPA, and MRS discharge score cleaned have direct implications on our model's ability to predict the TARGET. 
+
+Age and hasIVTPA (intravenous thrombolysis treatment) are inversely related to the likelihood of the TARGET, indicating that younger ages and those not receiving IVTPA might have different outcomes relative to the base case. On the other hand, an increase in MRS discharge score, which measures the degree of disability or dependence in daily activities, positively influences the TARGET, suggesting higher scores (more disability) are associated with the outcome.
+
+Interestingly, several dummy variables representing racial and ethnic categories were significant but showed no consistent trend in influence across the groups, highlighting the complexity of how these socio-demographic factors interact with medical outcomes.
+
+Notable among the findings is the variable 'dummy_hypertension_N', which significantly predicts the TARGET when hypertension is absent, reflecting a strong protective effect against the condition modeled. Conversely, variables like dummy_hyperlipidemia_N and other chronic conditions displayed strong positive associations with the TARGET, suggesting that these conditions might increase the likelihood of the outcome.
+
+The coefficients for log-transformed BMI and log-transformed Length of stay hours were also significant, suggesting that as these values increase, they have a discernible impact on the likelihood of the TARGET, though the relationship with BMI was negative, indicating a complex interaction potentially mediated by other factors.
+
+The presence of 'NA' across numerous coefficients indicates issues of multicollinearity or perfect separation, where some predictors perfectly predict the outcome, thus are not included in the final model due to redundancy or statistical indefiniteness.
 
