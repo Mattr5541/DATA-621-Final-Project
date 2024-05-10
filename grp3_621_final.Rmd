@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "Data 621 Final Project"
 output: pdf_document
 date: "2024-04-30"
 ---
@@ -7,6 +7,8 @@ date: "2024-04-30"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Determinants of Recurrent Stroke Incidence in a Clinical Sample
 
 ## Packages
 
@@ -22,6 +24,8 @@ library(glmnet)
 library(rpart)
 library(rpart.plot)
 library(ggfortify)
+library(tibble)
+library(webshot)
 ```
 
 ## Loading the Data
@@ -551,4 +555,84 @@ Notable among the findings is the variable 'dummy_hypertension_N', which signifi
 The coefficients for log-transformed BMI and log-transformed Length of stay hours were also significant, suggesting that as these values increase, they have a discernible impact on the likelihood of the TARGET, though the relationship with BMI was negative, indicating a complex interaction potentially mediated by other factors.
 
 The presence of 'NA' across numerous coefficients indicates issues of multicollinearity or perfect separation, where some predictors perfectly predict the outcome, thus are not included in the final model due to redundancy or statistical indefiniteness.
+
+
+
+
+## Figures and Tables
+
+### Table 1 
+
+```{r}
+summary_stats <- stroke_train_quant %>%
+  summarise(across(
+    everything(),
+    list(
+      Mean = ~mean(., na.rm = TRUE),
+      SD = ~sd(., na.rm = TRUE),
+      Median = ~median(., na.rm = TRUE),
+      IQR = ~IQR(., na.rm = TRUE),
+      Min = ~min(., na.rm = TRUE),
+      Max = ~max(., na.rm = TRUE),
+      N_Valid = ~sum(!is.na(.)),
+      N_Missing = ~sum(is.na(.))
+    ),
+    .names = "{.col}_{.fn}"  # Constructs names based on variable and function
+  ))
+
+# Transform to long format to manage separate statistic columns per variable
+summary_stats_long <- pivot_longer(summary_stats, cols = everything(), names_to = "Measure", values_to = "Value")
+
+# Use regex to properly separate the variable names and statistic types
+summary_stats_long <- summary_stats_long %>%
+  mutate(
+    Variable = sub("_(Mean|SD|Median|IQR|Min|Max|N_Valid|N_Missing)$", "", Measure),
+    Statistic = sub(".*_", "", Measure)
+  )
+
+# Pivot to wide format for easier readability in gt
+summary_stats_wide <- pivot_wider(summary_stats_long, names_from = "Statistic", values_from = "Value", id_cols = "Variable")
+
+gt_table <- gt(summary_stats_wide) %>%
+  cols_label(
+    Variable = "Variable",
+    Mean = "Mean",
+    SD = "Standard Deviation",
+    Median = "Median",
+    IQR = "Interquartile Range",
+    Min = "Minimum",
+    Max = "Maximum",
+    Valid = "Valid Observations",
+    Missing = "Missing Observations"
+  ) %>%
+  tab_header(
+    title = "Summary Statistics for Recurrent Stroke Numerical Variables",
+    subtitle = "Stroke Dataset Analysis"
+  ) %>%
+  fmt_number(
+    columns = vars(Mean, SD, Median, IQR, Min, Max),
+    decimals = 2
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "gray"),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style = cell_text(color = "white", weight = "bold"),
+    locations = cells_column_labels()
+  ) %>%
+  tab_footnote(
+    footnote = "Analysis conducted on the stroke dataset.",
+    locations = cells_title(groups = "subtitle")
+  )
+
+gtsave(gt_table, "stroke_summary_stats.html")
+
+#webshot::install_phantomjs()
+
+webshot("stroke_summary_stats.html", 
+                 "stroke_summary_stats.png",
+                 delay = 2)
+
+```
 
