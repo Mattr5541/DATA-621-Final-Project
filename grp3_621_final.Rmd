@@ -184,10 +184,29 @@ columns_to_impute <- c("race", "ethnicity", "gender", "arrival_mode", "arrival_f
 stroke_train <- stroke_train %>%
   mutate_at(.vars = columns_to_impute, .funs = mode_impute)
 
-stroke_train$MRS_discharge_score_cleaned <- median(stroke_train$MRS_discharge_score_cleaned, na.rm = TRUE)
-stroke_train$Arrival_NIHSS_score_cleaned <- median(stroke_train$Arrival_NIHSS_score_cleaned, na.rm = TRUE)
-stroke_train$Length_of_stay_hours <- median(stroke_train$Length_of_stay_hours, na.rm = TRUE)
-stroke_train$BMI <- median(stroke_train$BMI, na.rm = TRUE)
+stroke_train$MRS_discharge_score_cleaned <- ifelse(
+    is.na(stroke_train$MRS_discharge_score_cleaned), 
+    median(stroke_test$MRS_discharge_score_cleaned, na.rm = TRUE), 
+    stroke_train$MRS_discharge_score_cleaned
+)
+
+stroke_train$Arrival_NIHSS_score_cleaned <- ifelse(
+    is.na(stroke_train$Arrival_NIHSS_score_cleaned), 
+    median(stroke_test$Arrival_NIHSS_score_cleaned, na.rm = TRUE), 
+    stroke_train$Arrival_NIHSS_score_cleaned
+)
+
+stroke_train$Length_of_stay_hours <- ifelse(
+    is.na(stroke_train$Length_of_stay_hours), 
+    median(stroke_test$Length_of_stay_hours, na.rm = TRUE), 
+    stroke_train$Length_of_stay_hours
+)
+
+stroke_train$BMI <- ifelse(
+    is.na(stroke_train$BMI), 
+    median(stroke_test$BMI, na.rm = TRUE), 
+    stroke_train$BMI
+)
 ```
 
 Now there is no missing data in stroke_train dataset
