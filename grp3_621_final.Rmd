@@ -21,6 +21,7 @@ library(caret)
 library(glmnet)
 library(rpart)
 library(rpart.plot)
+library(ggfortify)
 ```
 
 ## Loading the Data
@@ -157,7 +158,7 @@ stroke_train <- stroke_train %>% select(-Arrival_NIHSS_score)
 stroke_test <- stroke_test %>% select(-Arrival_NIHSS_score)
 ```
 
-#Part 2
+# Data Handling and Cleaning
 ## Missing data
 
 ```{r}
@@ -253,106 +254,78 @@ print(missing_data_test)
 Creating dummy coding for categorical variables, in both training and testing datasets, results in a format that helps prepare data for further analysis. The '-1' part of the code was done to avoid multicollinearity issues.
 
 ```{r}
-#Train Dataset
-stroke_train$dummy_race_train <- model.matrix(~race - 1, data = stroke_train)
-stroke_train$dummy_eth_train <- model.matrix(~ethnicity- 1, data = stroke_train, na.action = na.pass)
-stroke_train$dummy_gender_train <- model.matrix(~gender- 1, data = stroke_train)
-stroke_train$dummy_vit_train <- model.matrix(~vital_status- 1, data = stroke_train)
-stroke_train$dummy_age_train <- model.matrix(~age_group- 1, data = stroke_train)
-stroke_train$dummy_visit_train <- model.matrix(~visit_type- 1, data = stroke_train)
-stroke_train$dummy_tobacco_curr_train <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_train)
-stroke_train$dummy_tobacco_past_train <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_train)
-stroke_train$dummy_fam_train <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_train)
-stroke_train$dummy_hypertension_train <- model.matrix(~hypertension- 1, data = stroke_train)
-stroke_train$dummy_diabetes_1_train <- model.matrix(~diabetes.mellitus- 1, data = stroke_train)
-stroke_train$dummy_diabetes_2_train <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_train)
-stroke_train$dummy_myo_train <- model.matrix(~myocardial.infarction- 1, data = stroke_train)
-stroke_train$dummy_hyperlipidemia_train <- model.matrix(~hyperlipidemia- 1, data = stroke_train)
-stroke_train$dummy_atrial_fib_train <- model.matrix(~atrial.fibrillation- 1, data = stroke_train)
-stroke_train$dummy_heart_disease_train <- model.matrix(~chronic.heart.disease- 1, data = stroke_train)
-stroke_train$dummy_kidney_train <- model.matrix(~chronic.kidney.disease- 1, data = stroke_train)
-stroke_train$dummy_coronary_train <- model.matrix(~Coronary.artery.disease- 1, data = stroke_train)
-stroke_train$dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-stroke_train$dummy_dysphagia_train <- model.matrix(~Dysphagia_outcome- 1, data = stroke_train)
-stroke_train$dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-stroke_train$dummy_isTransferEvent_train <- model.matrix(~isTransferEvent- 1, data = stroke_train)
-stroke_train$dummy_heart_fail_train <- model.matrix(~Heart.failure- 1, data = stroke_train)
-
-#Test Dataset
-stroke_test$dummy_race_test <- model.matrix(~race - 1, data = stroke_test)
-stroke_test$dummy_eth_test <- model.matrix(~ethnicity- 1, data = stroke_test, na.action = na.pass)
-stroke_test$dummy_gender_test <- model.matrix(~gender- 1, data = stroke_test)
-stroke_test$dummy_vit_test <- model.matrix(~vital_status- 1, data = stroke_test)
-stroke_test$dummy_age_test <- model.matrix(~age_group- 1, data = stroke_test)
- dummy_visit_test <- model.matrix(~visit_type- 1, data = stroke_test)
-stroke_test$dummy_tobacco_curr_test <- model.matrix(~Tobacco_current_use_indicator- 1, data = stroke_test)
-stroke_test$dummy_tobacco_past_test <- model.matrix(~Tobacco_prior_use_indicator- 1, data = stroke_test)
-stroke_test$dummy_fam_test <- model.matrix(~FamilyHistoryStrokeFlag- 1, data = stroke_test)
-stroke_test$dummy_hypertension_test <- model.matrix(~hypertension- 1, data = stroke_test)
-stroke_test$dummy_diabetes_1_test <- model.matrix(~diabetes.mellitus- 1, data = stroke_test)
-stroke_test$dummy_diabetes_2_test <- model.matrix(~diabetes.mellitus.type.2- 1, data = stroke_test)
-stroke_test$dummy_myo_test <- model.matrix(~myocardial.infarction- 1, data = stroke_test)
-stroke_test$dummy_hyperlipidemia_test <- model.matrix(~hyperlipidemia- 1, data = stroke_test)
-stroke_test$dummy_atrial_fib_test <- model.matrix(~atrial.fibrillation- 1, data = stroke_test)
-stroke_test$dummy_heart_disease_test <- model.matrix(~chronic.heart.disease- 1, data = stroke_test)
-stroke_test$dummy_kidney_test <- model.matrix(~chronic.kidney.disease- 1, data = stroke_test)
-stroke_test$dummy_coronary_test <- model.matrix(~Coronary.artery.disease- 1, data = stroke_test)
-stroke_test$dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
-stroke_test$dummy_dysphagia_test <- model.matrix(~Dysphagia_outcome- 1, data = stroke_test)
-stroke_test$dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
-stroke_test$dummy_isTransferEvent_test <- model.matrix(~isTransferEvent- 1, data = stroke_test)
-stroke_test$dummy_heart_fail_test <- model.matrix(~Heart.failure- 1, data = stroke_test)
-```
-
-## Transformation (HELP!!) 
-
-Log transformation on the variable BMI should prove to be helpful since the range of 2 to 259 is unrealistic in real world metrics (on both the higher and smaller end). The same transformation on Length_of_stay_hours would also be useful as there likely should not be negative hours nor 9,666 hours (max value) which estimates to over a year.
-
-```{r}
-log_no_neg <- function(x) {
-  max_val <- max(x, na.rm = TRUE)
-  min_val <- min(x, na.rm = TRUE)
-  shift <- 0
-  if (min_val <= 0) {
-    shift <- abs(min_val) + 1
-  }
-  x_shifted <- x + shift
-  log_x <- log(x_shifted)
-  log_x[is.na(x)] <- NA  
-  return(log_x)
+# Function to create dummy variables with consistent naming
+create_dummies <- function(data, variable_name) {
+  dummies <- model.matrix(~ get(variable_name) - 1, data=data)
+  colnames(dummies) <- paste("dummy", variable_name, gsub("(Intercept)|get\\(variable_name\\)", "", colnames(dummies)), sep="_")
+  return(dummies)
 }
 
-stroke_train_1 <- stroke_train %>%
-  mutate(
-    log_BMI = log_no_neg(BMI),
-    log_Length_of_stay_hours = log_no_neg(Length_of_stay_hours)
-  ) %>%
-  dplyr::select(-BMI, -Length_of_stay_hours)
+# List of categorical variables
+variables_list <- c("race", "ethnicity", "gender", "vital_status", "age_group", "visit_type",
+                    "Tobacco_current_use_indicator", "Tobacco_prior_use_indicator", 
+                    "FamilyHistoryStrokeFlag", "hypertension", "diabetes.mellitus", 
+                    "diabetes.mellitus.type.2", "myocardial.infarction", "hyperlipidemia", 
+                    "atrial.fibrillation", "chronic.heart.disease", "chronic.kidney.disease", 
+                    "Coronary.artery.disease", "Heart.failure", "Dysphagia_outcome", 
+                    "isTransferEvent")
+
+# Apply the function to both datasets using a loop to create dummy variables
+for (var in variables_list) {
+  stroke_train[paste("dummy", var, sep="_")] <- create_dummies(stroke_train, var)
+  stroke_test[paste("dummy", var, sep="_")] <- create_dummies(stroke_test, var)
+}
+
+```
 
 
-train_stats <- dfSummary(stroke_train_1, stats = c("mean", "sd", "med", "IQR", "min", "max", "valid", "n.missing"))
+
+
+## Transformation 
+
+Log transformation on the variable BMI should prove to be helpful since the range of 2 to 259 is unrealistic in real world metrics (on both the higher and smaller end). The same transformation on Length_of_stay_hours would also be useful as there likely should not be negative hours nor 9,666 hours (max value) which estimates to over a year.
+```{r}
+stroke_train[] <- lapply(stroke_train, function(x) {
+    if(is.factor(x)) factor(x) else x
+})
+
+
+
+stroke_train$log_BMI <- log(stroke_train$BMI + 1)
+stroke_train$log_Length_of_stay_hours <- log(stroke_train$Length_of_stay_hours + 1)
+
+stroke_test$log_BMI <- log(stroke_test$BMI + 1)
+stroke_test$log_Length_of_stay_hours <- log(stroke_test$Length_of_stay_hours + 1)
+
+print(sum(is.na(stroke_train$log_BMI)))
+print(sum(is.na(stroke_train$log_Length_of_stay_hours)))
+
+print(sum(is.na(stroke_test$log_BMI)))
+print(sum(is.na(stroke_test$log_Length_of_stay_hours)))
+
+
+
+train_stats <- dfSummary(stroke_train, stats = c("mean", "sd", "med", "IQR", "min", "max", "valid", "n.missing"))
 
 view(train_stats)
 
-#Both result in one distinct value which seems wrong
 ```
-`
-`
+
+
+
+
 ```{r}
-# Apply log transformations safely by adding 1 to avoid log(0)
-stroke_train <- stroke_train %>%
-  mutate(log_BMI = log(BMI + 1),
-         log_Length_of_stay_hours = log(Length_of_stay_hours + 1))
+
 
 # Check the histograms of the log-transformed variables
 par(mfrow=c(1,2))
 hist(stroke_train$log_BMI, main = "Log-transformed BMI")
 hist(stroke_train$log_Length_of_stay_hours, main = "Log-transformed Length_of_stay_hours")
 
-#tried it again - same issue
+
 ```
 
-### Part 3
+### Building the Model
 
 #### Filtering out all the categorical variables
 
@@ -380,6 +353,15 @@ The summary yields the result "Coefficients: (28 not defined because of singular
 
 ```{r}
 # Extract predictor variables and the target variable from the stroke_train data
+# Impute the missing value using the median of the column
+#stroke_train$log_Length_of_stay_hours[is.na(stroke_train$log_Length_of_stay_hours)] <- median(stroke_train$log_Length_of_stay_hours, na.rm = TRUE)
+
+stroke_train[] <- lapply(stroke_train, function(x) {
+    if(is.factor(x)) factor(x) else x
+})
+# Impute the missing value using the median of the column
+stroke_train$log_Length_of_stay_hours[is.na(stroke_train$log_Length_of_stay_hours)] <- median(stroke_train$log_Length_of_stay_hours, na.rm = TRUE)
+
 X <- model.matrix(~ . - 1, data = stroke_train)  # Remove intercept term
 Y <- stroke_train$TARGET
 
@@ -437,9 +419,89 @@ rpart.plot(tree_model, type = 4, extra = 101)
 
 Given that the goal is predict a binary "TARGET" variable with many different variables, using a decision tree may be an advantageous method given that decision trees automatically select the most relevant variables.
 
+### Model Validation and Selection
+
+I will use mean standard error to conduct model validation.
+
+```{r}
+# Logistic Regression
+predicted_vals_lr <- predict(model, newdata = stroke_train, type = "response")
+observed_vals_lr <- stroke_train$TARGET
+res_lr <- observed_vals_lr - predicted_vals_lr
+mse_lr <- mean(res_lr^2)
+
+# Lasso Regression
+predicted_vals_lasso <- predict(lasso_model, newx = X, s = optimal_lambda, type = "response")
+observed_vals_lasso <- Y
+res_lasso <- observed_vals_lasso - predicted_vals_lasso
+mse_lasso <- mean(res_lasso^2)
+
+# Ridge Regression
+predicted_vals_ridge <- predict(ridge_model, newx = X, s = optimal_lambda, type = "response")
+observed_vals_ridge <- Y
+res_ridge <- observed_vals_ridge - predicted_vals_ridge
+mse_ridge <- mean(res_ridge^2)
+
+# Print MSE of each model
+cat("Logistic Regression MSE:", mse_lr, "\n")
+cat("Lasso Regression MSE:", mse_lasso, "\n")
+cat("Ridge Regression MSE:", mse_ridge, "\n")
+
+```
+
+The Lasso Regression model performs the best among the three models. It has the lowest MSE, indicating that the predicted probabilities from the Lasso model are closest to the actual outcomes on the training set. This suggests that Lasso Regression, which includes a penalty term that encourages the model to reduce the number of coefficients, effectively minimizes overfitting and improves the model's predictive accuracy. Ridge Regression also improves upon the basic Logistic Regression model but does not reach the predictive accuracy of the Lasso model. Logistic Regression, without any regularization, has the highest MSE, suggesting it might be overfitting to the training data.
+
+Now, I will plot the residuals:
+
+```{r}
+residuals_data <- data.frame(
+  Observed = c(observed_vals_lr, observed_vals_lasso, observed_vals_ridge),
+  Residuals = c(res_lr, res_lasso, res_ridge),
+  Model = factor(c(rep("Logistic", length(res_lr)),
+                   rep("Lasso", length(res_lasso)),
+                   rep("Ridge", length(res_ridge)))
+                 )
+)
+
+ggplot(residuals_data, aes(x = Observed, y = Residuals, color = Model)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals Plot for Logistic, Lasso, and Ridge Regression Models",
+       x = "Observed Values",
+       y = "Residuals") +
+  theme_minimal() +
+  scale_color_manual(values = c("blue", "green", "purple")) +
+  theme(legend.title = element_blank())
+```
 
 
+Moving forward, lets use the Lasso Model
 
+Now lets make predictions using the test dataset.
+
+```{r}
+names(stroke_test) <- gsub("test", "train", names(stroke_test))
+print(colnames(stroke_test))
+
+X_test <- model.matrix(~ . - 1, data = stroke_test)
+
+# Rechecking column names
+print(colnames(X_test))
+
+# Now, retry the prediction
+predicted_probs <- predict(lasso_model, newx = X_test, s = optimal_lambda, type = "response")
+
+# Create a data frame for visualization
+predictions <- data.frame(Probability = predicted_probs)
+
+
+ggplot(predictions, aes(x = predicted_probs)) +
+  geom_histogram(bins = 50, fill = "blue", color = "black") +
+  ggtitle("Histogram of Predicted Probabilities") +
+  xlab("Predicted Probability of TARGET = 1") +
+  ylab("Frequency") +
+  theme_minimal()
+```
 
 
 
