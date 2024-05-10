@@ -423,7 +423,15 @@ ridge_model <- glmnet(X, Y, family = "binomial", alpha = 0, lambda = optimal_lam
 print(ridge_model)
 ```
 
+#### Decision Trees
 
+```{r}
+tree_model <- rpart(TARGET ~ ., data = stroke_train, method = "class")
+
+rpart.plot(tree_model, type = 4, extra = 101)
+```
+
+Given that the goal is predict a binary "TARGET" variable with many different variables, using a decision tree may be an advantageous method given that decision trees automatically select the most relevant variables.
 
 
 
