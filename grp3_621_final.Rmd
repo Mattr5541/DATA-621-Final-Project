@@ -636,3 +636,52 @@ webshot("stroke_summary_stats.html",
 
 ```
 
+```{r}
+coefs <- broom::tidy(model)
+ggplot(coefs, aes(x = reorder(term, estimate), y = estimate, fill = estimate > 0)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Coefficients of Logistic Regression Model",
+       x = "Features",
+       y = "Coefficient Value") +
+  theme_minimal()
+
+```
+
+```{r}
+library(pROC)
+predicted_probs <- predict(model, newdata = stroke_test, type = "response")
+roc_curve <- roc(stroke_test$TARGET, predicted_probs)
+plot(roc_curve, main = "ROC Curve for Logistic Regression Model")
+
+```
+
+```{r}
+predicted_probs <- predict(model, newdata = stroke_test, type = "response")
+ggplot(data.frame(Probability = predicted_probs), aes(x = Probability)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  ggtitle("Histogram of Predicted Probabilities (Logistic Regression)") +
+  xlab("Predicted Probability of Stroke") +
+  ylab("Frequency") +
+  theme_minimal()
+
+```
+
+```{r}
+library(reshape2)
+
+
+cor_matrix <- cor(stroke_train_quant, use = "complete.obs")
+
+
+melted_cor_matrix <- melt(cor_matrix)
+
+
+ggplot(melted_cor_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Heatmap of Correlation Matrix", x = "Variables", y = "Variables")
+```
+
