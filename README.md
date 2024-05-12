@@ -31,9 +31,12 @@ Recurrent Stroke, Logistic Regression, Stroke Risk Factors, Predictive Modeling,
 
 ## Works Cited:
 
-Data Citation: Sanelli, P., Yang, B., O'Hara, J., Jimenez, J., Gribko, M., Martinez, G., Feizullayeva, C., Adinarayan, K., Hoang, A., Qui, M., Wang, J., Boltyenkov, A., Sangha, K., Sanmartin, M., Elhabr, A., & Katz, J. (2023, April 11). Stroke health outcomes database. Retrieved April 11, 2023
+### Data Citation: 
 
-Literature Citations: 
+Sanelli, P., Yang, B., O'Hara, J., Jimenez, J., Gribko, M., Martinez, G., Feizullayeva, C., Adinarayan, K., Hoang, A., Qui, M., Wang, J., Boltyenkov, A., Sangha, K., Sanmartin, M., Elhabr, A., & Katz, J. (2023, April 11). Stroke health outcomes database. Retrieved April 11, 2023
+
+
+### Literature Citations: 
 
 Albright, K. C., Huang, L., Blackburn, J., Howard, G., Mullen, M., Bittner, V., ... & Howard, V. (2018). Racial differences in recurrent ischemic stroke risk and recurrent stroke case fatality. Neurology, 91(19), e1741-e1750.
 
@@ -52,8 +55,6 @@ Ferrone, S. R., Boltyenkov, A. T., Lodato, Z., O'Hara, J., Vialet, J., Malhotra,
 ICD-10-CM Diagnosis Code I63.9: Cerebral infarction. (2024). Retrieved from https://www.icd10data.com/ICD10CM/Codes/I00-I99/I60-I69/I63-/I63.9
 
 Kolmos, M., Christoffersen, L., & Kruuse, C. (2021). Recurrent ischemic stroke–a systematic review and meta-analysis. Journal of Stroke and Cerebrovascular Diseases, 30(8), 105935.
-
-Sanelli, P., Yang, B., O'Hara, J., Jimenez, J., Gribko, M., Martinez, G., Feizullayeva, C., Adinarayan, K., Hoang, A., Qui, M., Wang, J., Boltyenkov, A., Sangha, K., Sanmartin, M., Elhabr, A., & Katz, J. (2023, April 11). Stroke health outcomes database. Retrieved April 11, 2023.
 
 Shah, S., Liang, L., Kosinski, A., Hernandez, A. F., Schwamm, L. H., Smith, E. E., ... & Xian, Y. (2020). Safety and outcomes of intravenous TPA in acute ischemic stroke patients with prior stroke within 3 months: Findings from get with the guidelines–stroke. Circulation: Cardiovascular Quality and Outcomes, 13(1), e006031.
 
