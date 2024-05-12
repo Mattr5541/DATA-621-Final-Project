@@ -26,7 +26,7 @@ Recurrent Stroke, Logistic Regression, Stroke Risk Factors, Predictive Modeling,
 
 [PRESENTATION](INSERT LINK HERE)
 
-[R statistical programming code](INSERT LINK HERE)
+[R statistical programming code](https://github.com/Mattr5541/DATA-621-Final-Project/blob/main/grp3_621_final.Rmd)
 
 
 ## Works Cited:
