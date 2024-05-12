@@ -65,7 +65,7 @@ WHO EMRO | Stroke, Cerebrovascular accident | Health topics. (2023). World Healt
 
 
 <!-- Place this tag where you want the button to render -->
-<a class="github-button" href="https://github.com/Mattr5541/DATA-621-Final-Project" aria-label="VISIT OUR GITHUB REPO">Star</a>
+<a class="github-button" href="https://github.com/Mattr5541/DATA-621-Final-Project" aria-label="VISIT OUR GITHUB REPO">VISIT OUR GITHUB REPO</a>
 
 <!-- Load the GitHub buttons script -->
 <script async defer src="https://buttons.github.io/buttons.js"></script>
