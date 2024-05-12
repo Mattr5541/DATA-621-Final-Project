@@ -15,11 +15,11 @@ Recurrent Stroke, Logistic Regression, Stroke Risk Factors, Predictive Modeling,
 
 
 ## Files:
-[Paper/ Manuscript](INSERT LINK HERE)
+[Paper/ Manuscript](https://github.com/Mattr5541/DATA-621-Final-Project/blob/main/DATA%20621%20-%20Final%20Paper.pdf)
 
-[SUPPLEMENTAL TABLES AND FIGURES](INSERT LINK HERE)
+[SUPPLEMENTAL TABLES AND FIGURES](https://github.com/Mattr5541/DATA-621-Final-Project/blob/main/Data%20621%20Final%20Supplemental%20Figs%20and%20Tables.pdf)
 
-[PRESENTATION](INSERT LINK HERE)
+[PRESENTATION](https://github.com/Mattr5541/DATA-621-Final-Project/blob/main/grp3_621_final_prezi.pdf)
 
 [R statistical programming code](https://github.com/Mattr5541/DATA-621-Final-Project/blob/main/grp3_621_final.Rmd)
 
