@@ -1,4 +1,4 @@
-## Team Members
+
 {% for member in site.team_members %}
 - [{{ member.name }}]({{ member.github }})
 {% endfor %}
