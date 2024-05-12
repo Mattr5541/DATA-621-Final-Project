@@ -57,3 +57,13 @@ Singh, R. J., Chen, S., Ganesh, A., & Hill, M. D. (2018). Long-term neurological
 Tsao, C. W., Aday, A. W., Almarzooq, Z. I., et al. (2022). Heart disease and stroke statistics—2022 update: a report from the American Heart Association. Circulation, 145, e153–e639. https://doi.org/10.1161/CIR.0000000000001052
 
 WHO EMRO | Stroke, Cerebrovascular accident | Health topics. (2023). World Health Organization - Regional Office for the Eastern Mediterranean. Retrieved from https://www.emro.who.int/health-topics/stroke-cerebrovascular-accident/index.html
+
+
+
+
+<!-- Place this tag where you want the button to render -->
+<a class="github-button" href="https://github.com/Mattr5541/DATA-621-Final-Project" aria-label="Star username/repo on GitHub">Star</a>
+
+<!-- Load the GitHub buttons script -->
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+
