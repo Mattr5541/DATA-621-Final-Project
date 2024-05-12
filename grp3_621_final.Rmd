@@ -685,3 +685,39 @@ ggplot(melted_cor_matrix, aes(Var1, Var2, fill = value)) +
   labs(title = "Heatmap of Correlation Matrix", x = "Variables", y = "Variables")
 ```
 
+```{r}
+mse_data <- data.frame(
+  Model = c("Logistic Regression", "Lasso Regression", "Ridge Regression", "Decision Tree"),
+  MSE = c(mse_lr, mse_lasso, mse_ridge, mse_tree)
+)
+
+mse_table <- gt(mse_data) %>%
+  tab_header(
+    title = "Model Comparison",
+    subtitle = "Mean Squared Errors of Predictive Models"
+  ) %>%
+  cols_label(
+    Model = "Model",
+    MSE = "Mean Squared Error"
+  ) %>%
+  fmt_number(
+    columns = vars(MSE),
+    decimals = 4
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "gray"),
+      cell_text(color = "white", weight = "bold")
+    ),
+    locations = cells_column_labels(columns = TRUE)
+  )
+
+# Print or save the table
+print(mse_table)
+
+# Optional: Save the table as HTML or PNG
+gtsave(mse_table, "model_mse_comparison.html")
+webshot("model_mse_comparison.html", "model_mse_comparison.png", delay = 2)
+
+```
+
