@@ -1,8 +1,7 @@
-# Set the default behavior, in case people don't have core.autocrlf set.
+
 * text=auto
 
-# Explicitly declare text files you want to always be normalized and converted
-# to native line endings on checkout.
+
 *.r text
 *.rmd text
 *.html text
@@ -13,14 +12,7 @@
 *.jpg binary
 *.pdf binary
 
-# Additional settings for other binary resources commonly found in data science projects
-*.data binary
-*.RData binary
-*.rds binary
 
-# Minimize diffs for rendered HTML files
-*.html -diff
-
-# Linguist settings for GitHub repository statistics
 *.r linguist-language=R
 *.rmd linguist-language=R
+*.html linguist-detectable=false
