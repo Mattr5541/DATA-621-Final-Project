@@ -1,6 +1,3 @@
-# Determinants of Recurrent Stroke Incidence in a Clinical Sample
-
-
 
 {% for member in site.team_members %}
 - [{{ member.name }}]({{ member.github }})
