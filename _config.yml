@@ -1,4 +1,5 @@
 title: DATA-621-Final-Project
+description: Determinants of Recurrent Stroke Incidence in a Clinical Sample
 
 team_members:
   - name: Coco Donovan
@@ -11,3 +12,5 @@ team_members:
     github: https://github.com/matthewroland
 
 theme: minima
+
+
