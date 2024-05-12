@@ -1,5 +1,13 @@
 title: DATA-621-Final-Project
 
-
+team_members:
+  - name: Coco Donovan
+    github: https://github.com/cocodonovan
+  - name: Marjete Vucinaj
+    github: https://github.com/marjetevucinaj
+  - name: Jean Jimenez
+    github: https://github.com/jeanjimenez
+  - name: Matthew Roland
+    github: https://github.com/matthewroland
 
 theme: minima
